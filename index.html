@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Savings & Money Safe Calculator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-100 min-h-screen p-4 md:p-8 font-sans">
+
+    <div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg overflow-hidden">
+        <!-- Header -->
+        <div class="bg-blue-600 p-6 text-white text-center">
+            <h1 class="text-3xl font-bold">Personal Savings & Money Safe Calculator</h1>
+            <p class="mt-2 text-blue-100">Track your costs and plan your savings goal</p>
+        </div>
+
+        <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+            
+            <!-- Left Column: Inputs -->
+            <div class="space-y-6">
+                
+                <!-- Income Section -->
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                    <h2 class="text-xl font-semibold mb-4 text-slate-700">1. Monthly Income</h2>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-600 mb-1">Total Monthly Income (৳)</label>
+                        <input type="number" id="income" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="e.g. 50000" oninput="calculate()">
+                    </div>
+                </div>
+
+                <!-- Expenses Section -->
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-xl font-semibold text-slate-700">2. Monthly Costs</h2>
+                        <button onclick="addExpense()" class="bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm font-medium hover:bg-blue-200 transition">+ Add Cost</button>
+                    </div>
+                    
+                    <div id="expense-list" class="space-y-3 max-h-60 overflow-y-auto pr-2">
+                        <!-- Expenses will be loaded here dynamically -->
+                    </div>
+                    
+                    <div class="mt-4 pt-4 border-t border-slate-200 flex justify-between items-center font-bold text-slate-700">
+                        <span>Total Costs:</span>
+                        <span id="total-costs-display">৳ 0</span>
+                    </div>
+                </div>
+
+                <!-- Goal Section -->
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                    <h2 class="text-xl font-semibold mb-4 text-slate-700">3. Savings Goal</h2>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">Target Amount (৳)</label>
+                            <input type="number" id="goal-amount" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" placeholder="e.g. 100000" oninput="calculate()">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-600 mb-1">Target Date (Calendar)</label>
+                            <input type="date" id="target-date" class="w-full p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none" oninput="calculate()">
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Column: Dashboard & Results -->
+            <div class="bg-slate-800 text-white p-6 rounded-xl flex flex-col justify-center space-y-8">
+                <h2 class="text-2xl font-bold text-center border-b border-slate-600 pb-4">Your Dashboard</h2>
+                
+                <div class="grid grid-cols-2 gap-4 text-center">
+                    <div class="bg-slate-700 p-4 rounded-lg">
+                        <p class="text-sm text-slate-400 mb-1">Monthly Income</p>
+                        <p class="text-xl font-bold text-green-400" id="dash-income">৳ 0</p>
+                    </div>
+                    <div class="bg-slate-700 p-4 rounded-lg">
+                        <p class="text-sm text-slate-400 mb-1">Monthly Costs</p>
+                        <p class="text-xl font-bold text-red-400" id="dash-costs">৳ 0</p>
+                    </div>
+                </div>
+
+                <div class="bg-blue-600 p-6 rounded-lg text-center shadow-inner">
+                    <p class="text-lg text-blue-200 mb-1">Net Monthly Savings</p>
+                    <p class="text-4xl font-bold" id="dash-savings">৳ 0</p>
+                </div>
+
+                <div class="bg-slate-700 p-6 rounded-lg">
+                    <h3 class="text-lg font-semibold mb-3 text-slate-200">Goal Projection</h3>
+                    <div id="projection-results" class="text-slate-300 space-y-2">
+                        <p>Please enter your income, costs, and goal to see your projection.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // Load data automatically when the page opens
+        window.onload = function() {
+            loadData();
+        };
+
+        function formatCurrency(amount) {
+            return '৳ ' + amount.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+        }
+
+        function addExpense(name = '', amount = '') {
+            const expenseList = document.getElementById('expense-list');
+            const newExpense = document.createElement('div');
+            newExpense.className = 'expense-item flex gap-2 mt-3';
+            // Added oninput="calculate()" to the name input too, so typing the name also saves the data
+            newExpense.innerHTML = `
+                <input type="text" class="w-1/2 p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none expense-name" placeholder="Cost name (e.g. Rent)" value="${name}" oninput="calculate()">
+                <input type="number" class="w-1/2 p-2 border border-slate-300 rounded focus:ring-2 focus:ring-blue-500 focus:outline-none expense-amount" placeholder="Amount (৳)" value="${amount}" oninput="calculate()">
+                <button onclick="removeExpense(this)" class="text-red-500 hover:text-red-700 px-2 font-bold">×</button>
+            `;
+            expenseList.appendChild(newExpense);
+        }
+
+        function removeExpense(button) {
+            button.parentElement.remove();
+            calculate(); // Recalculate and save after removing
+        }
+
+        function calculate() {
+            // 1. Get Income
+            const incomeInput = document.getElementById('income').value;
+            const income = parseFloat(incomeInput) || 0;
+
+            // 2. Get Total Costs
+            const expenseInputs = document.querySelectorAll('.expense-amount');
+            let totalCosts = 0;
+            expenseInputs.forEach(input => {
+                totalCosts += parseFloat(input.value) || 0;
+            });
+
+            // 3. Calculate Net Savings
+            const netSavings = income - totalCosts;
+
+            // 4. Update Dashboard Basic Numbers
+            document.getElementById('total-costs-display').innerText = formatCurrency(totalCosts);
+            document.getElementById('dash-income').innerText = formatCurrency(income);
+            document.getElementById('dash-costs').innerText = formatCurrency(totalCosts);
+            document.getElementById('dash-savings').innerText = formatCurrency(netSavings);
+
+            // Change savings color based on positive/negative
+            const savingsElement = document.getElementById('dash-savings');
+            if (netSavings < 0) {
+                savingsElement.classList.replace('text-white', 'text-red-300');
+            } else {
+                savingsElement.classList.replace('text-red-300', 'text-white');
+            }
+
+            // 5. Goal Projection Logic
+            const goalInput = document.getElementById('goal-amount').value;
+            const goal = parseFloat(goalInput) || 0;
+            const targetDateInput = document.getElementById('target-date').value;
+            const projectionBox = document.getElementById('projection-results');
+
+            if (goal > 0 && netSavings > 0) {
+                const monthsNeeded = Math.ceil(goal / netSavings);
+                
+                let estimatedDate = new Date();
+                estimatedDate.setMonth(estimatedDate.getMonth() + monthsNeeded);
+                
+                const options = { year: 'numeric', month: 'long', day: 'numeric' };
+                const formattedEstDate = estimatedDate.toLocaleDateString('en-US', options);
+
+                let projectionHTML = `
+                    <p>Time required: <span class="text-white font-bold">${monthsNeeded} months</span></p>
+                    <p>Estimated completion: <span class="text-white font-bold">${formattedEstDate}</span></p>
+                `;
+
+                if (targetDateInput) {
+                    const targetDate = new Date(targetDateInput);
+                    targetDate.setHours(0,0,0,0);
+                    estimatedDate.setHours(0,0,0,0);
+
+                    if (estimatedDate <= targetDate) {
+                        projectionHTML += `<p class="mt-3 text-green-400 font-medium">✓ Great news! You are on track to meet your target date.</p>`;
+                    } else {
+                        projectionHTML += `<p class="mt-3 text-red-400 font-medium">⚠ Warning: At this savings rate, you will miss your target date. Try to reduce your costs or increase income.</p>`;
+                    }
+                } else {
+                    projectionHTML += `<p class="mt-3 text-slate-400 text-sm italic">Select a target date from the calendar to see if you are on track.</p>`;
+                }
+
+                projectionBox.innerHTML = projectionHTML;
+
+            } else if (goal > 0 && netSavings <= 0) {
+                projectionBox.innerHTML = `<p class="text-red-400">Your costs are too high to save for this goal. You need positive monthly savings.</p>`;
+            } else if (goal === 0) {
+                 projectionBox.innerHTML = `<p>Set a target amount to see your projection.</p>`;
+            }
+
+            // 6. Save Data automatically every time a calculation happens
+            saveData();
+        }
+
+        // --- NEW LOCAL STORAGE FUNCTIONS --- //
+        
+        function saveData() {
+            // Gather all expenses
+            const expenses = [];
+            document.querySelectorAll('.expense-item').forEach(item => {
+                const name = item.querySelector('.expense-name').value;
+                const amount = item.querySelector('.expense-amount').value;
+                if (name || amount) {
+                    expenses.push({ name: name, amount: amount });
+                }
+            });
+
+            // Create a data object
+            const appData = {
+                income: document.getElementById('income').value,
+                goal: document.getElementById('goal-amount').value,
+                targetDate: document.getElementById('target-date').value,
+                expenses: expenses
+            };
+
+            // Save to browser storage
+            localStorage.setItem('savingsCalcData', JSON.stringify(appData));
+        }
+
+        function loadData() {
+            const savedData = localStorage.getItem('savingsCalcData');
+            
+            if (savedData) {
+                const appData = JSON.parse(savedData);
+                
+                // Restore basic inputs
+                document.getElementById('income').value = appData.income || '';
+                document.getElementById('goal-amount').value = appData.goal || '';
+                document.getElementById('target-date').value = appData.targetDate || '';
+
+                // Restore expenses
+                if (appData.expenses && appData.expenses.length > 0) {
+                    appData.expenses.forEach(exp => {
+                        addExpense(exp.name, exp.amount);
+                    });
+                } else {
+                    addExpense(); // Add one blank row if no expenses are saved
+                }
+            } else {
+                addExpense(); // Add one blank row for a brand new user
+            }
+
+            // Run calculate to update the dashboard based on loaded data
+            calculate();
+        }
+    </script>
+</body>
+</html>
